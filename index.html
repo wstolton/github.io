@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Training Log</title>
+<style>
+  :root {
+    --bg: #12171B; --surface: #1B2228; --surface-alt: #232C33; --line: #2C363D;
+    --chalk: #ECE7DA; --muted: #8B98A1; --hold: #D6491F; --gold: #C9A227; --green: #6B9E78;
+    --danger: #C24A3F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12171B; --surface: #1B2228; --surface-alt: #232C33; --line: #2C363D;
+      --chalk: #ECE7DA; --muted: #8B98A1; --hold: #D6491F; --gold: #C9A227; --green: #6B9E78;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12171B; --surface: #1B2228; --surface-alt: #232C33; --line: #2C363D;
+    --chalk: #ECE7DA; --muted: #8B98A1; --hold: #D6491F; --gold: #C9A227; --green: #6B9E78;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--chalk);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 60px; }
+  .disp {
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .eyebrow { font-size: 11px; color: var(--hold); margin-bottom: 4px; }
+  h1.title { font-size: 28px; color: var(--chalk); margin: 0 0 6px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin: 0 0 18px; line-height: 1.5; }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
+  .tab-btn {
+    flex-shrink: 0; font-size: 11px; padding: 9px 13px; border-radius: 6px;
+    border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer;
+  }
+  .tab-btn.active { background: var(--hold); border-color: var(--hold); color: #fff; }
+  .tab-btn.add-tab { border-style: dashed; }
+  .blurb { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 10px; }
+  .routine-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .addbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .btn { font-family: inherit; border: none; border-radius: 6px; cursor: pointer; }
+  .btn-sm { padding: 10px 14px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--hold); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .btn-danger-ghost { background: transparent; color: var(--danger); border: 1px solid var(--line); }
+  .btn-block { display: block; width: 100%; padding: 13px; text-align: center; }
+  .cat-label { font-size: 11px; color: var(--gold); margin-bottom: 10px; letter-spacing: 0.1em; }
+  .cat-group { margin-bottom: 22px; }
+  .row { display: flex; align-items: flex-start; gap: 10px; }
+  .step-badge {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-alt);
+    border: 1px solid var(--line); color: var(--muted); font-size: 10px; display: flex;
+    align-items: center; justify-content: center; margin-top: 14px;
+  }
+  .card {
+    display: block; width: 100%; text-align: left; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+  }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .card-name { font-size: 15px; color: var(--chalk); }
+  .card-sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .pill { font-size: 10px; padding: 3px 8px; border-radius: 3px; letter-spacing: 0.08em; white-space: nowrap; }
+  .pill-muted { background: var(--surface-alt); color: var(--muted); }
+  .pill-gold { background: rgba(201,162,39,0.18); color: var(--gold); }
+  .pill-hold { background: rgba(214,73,31,0.18); color: var(--hold); }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--muted);
+    cursor: pointer; padding: 0; margin-bottom: 16px; font-size: 11px;
+  }
+  .baseline { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+  .detail-head { display: flex; align-items: center; gap: 10px; }
+  .info-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+  .note-details + .note-details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .note-summary { font-size: 10px; cursor: pointer; margin-bottom: 3px; }
+  .note-details[open] .note-summary { margin-bottom: 8px; }
+  .info-body { color: var(--chalk); font-size: 14px; line-height: 1.5; margin-top: 6px; }
+  .chart-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 10px 6px; margin-bottom: 14px; overflow-x: auto; }
+  .chart-label { font-size: 10px; color: var(--muted); padding: 0 6px 8px; }
+  .field { margin-bottom: 12px; }
+  .field label { font-size: 10px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .field input, .field select, .field textarea {
+    background: var(--surface-alt); border: 1px solid var(--line); color: var(--chalk);
+    border-radius: 6px; padding: 10px 12px; font-size: 16px; width: 100%; font-family: inherit;
+  }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 12px; margin-bottom: 14px; }
+  .form-actions { display: flex; gap: 10px; margin-top: 14px; }
+  .form-actions .btn-primary, .form-actions .btn-ghost { padding: 12px 16px; font-size: 12px; }
+  .form-actions .btn-primary { flex: 1; }
+  .checks { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+  .check-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--chalk); }
+  .error-text { color: var(--danger); font-size: 12px; margin-top: -6px; margin-bottom: 10px; }
+  .hist-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .hist-main { color: var(--chalk); font-size: 14px; }
+  .hist-meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .icon-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 6px; display: flex; }
+  .empty { color: var(--muted); font-size: 13px; padding: 10px 0 4px; }
+  .hist-title { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+  .section-title { margin-top: 22px; }
+  .ql-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .ql-name { font-size: 14px; color: var(--chalk); margin-bottom: 10px; }
+  .ql-fields .field { margin-bottom: 0; }
+  .data-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .flash-msg { background: var(--surface-alt); border: 1px solid var(--line); color: var(--chalk); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ---------------- data (blank slate: no preset exercises or routines) ----------------
+var CATEGORY_SUGGESTIONS = ["Pull", "Push", "Shoulders", "Arms", "Grip", "Core", "Posterior Chain", "Legs"];
+var UNIT_FIELDS = { reps_weight: ["sets","reps","weight"], reps: ["sets","reps"], time: ["sets","time"] };
+var FIXED_SESSIONS = [{ id: "all", label: "All", blurb: "Every exercise you've added, grouped by category." }];
+
+// ---------------- storage ----------------
+function safeGet(key, fallback) {
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch (e) { return fallback; }
+}
+function safeSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch (e) { return false; }
+}
+function getExercises() { return safeGet("exercises", []); }
+function saveExercises(arr) { return safeSet("exercises", arr); }
+function getRoutines() { return safeGet("routines", []); }
+function saveRoutines(arr) { return safeSet("routines", arr); }
+function getLogs(id) { return safeGet("logs:" + id, []); }
+function saveLogs(id, logs) { return safeSet("logs:" + id, logs); }
+function deleteLogsFor(id) { try { localStorage.removeItem("logs:" + id); } catch (e) {} }
+
+// ---------------- derived ----------------
+function exerciseMap() {
+  var m = {};
+  getExercises().forEach(function (e) { m[e.id] = e; });
+  return m;
+}
+function categoriesInOrder() {
+  var cats = [];
+  getExercises().forEach(function (e) {
+    if (cats.indexOf(e.category) === -1) cats.push(e.category);
+  });
+  return cats;
+}
+function allSessions() { return FIXED_SESSIONS.concat(getRoutines()); }
+function sessionExercises(sessionId) {
+  return getExercises().filter(function (e) {
+    return (e.sessionIds || []).indexOf(sessionId) !== -1;
+  });
+}
+
+// ---------------- state ----------------
+var state = { view: "home", sessionId: "all", openId: null, quickSessionId: null, showAddForm: false, showLogForm: false, showAddRoutine: false, showEditForm: false, flashMessage: null, exportFallback: null };
+
+// ---------------- helpers ----------------
+function esc(s) {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function fmtTime(sec) {
+  sec = sec || 0;
+  var m = Math.floor(sec / 60), s = sec % 60;
+  return m + ":" + (s < 10 ? "0" + s : s);
+}
+function lastSessionLabel(ex, log) {
+  if (!log) return "Not logged yet";
+  var parts = [];
+  if (log.sets) parts.push(log.sets + "x");
+  if (ex.unit === "time") parts.push(fmtTime(log.time || 0));
+  else if (log.reps) parts.push(log.reps);
+  if (log.weight) parts.push("+" + log.weight + "kg");
+  return parts.join(" ") || "Logged";
+}
+function slugify(str) {
+  return String(str).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+function uniqueExerciseId(base) {
+  var ids = getExercises().map(function (e) { return e.id; });
+  base = base || "exercise";
+  var id = base, n = 2;
+  while (ids.indexOf(id) !== -1) { id = base + "-" + n; n++; }
+  return id;
+}
+function uniqueSessionId(base) {
+  var ids = allSessions().map(function (s) { return s.id; });
+  base = base || "routine";
+  var id = base, n = 2;
+  while (ids.indexOf(id) !== -1) { id = base + "-" + n; n++; }
+  return id;
+}
+function flash(msg) {
+  state.flashMessage = msg;
+  render();
+  setTimeout(function () {
+    if (state.flashMessage === msg) { state.flashMessage = null; render(); }
+  }, 4500);
+}
+
+// ---------------- CSV export / import ----------------
+function csvEscape(field) {
+  field = field === null || field === undefined ? "" : String(field);
+  if (/[",\n\r]/.test(field)) field = '"' + field.replace(/"/g, '""') + '"';
+  return field;
+}
+function buildCSV() {
+  var header = ["exercise_id", "exercise_name", "category", "unit", "date", "sets", "reps", "weight", "time_seconds", "note"];
+  var rows = [header.join(",")];
+  getExercises().forEach(function (ex) {
+    getLogs(ex.id).forEach(function (l) {
+      var row = [ex.id, ex.name, ex.category, ex.unit, l.date, l.sets || "", l.reps || "", l.weight || "", l.time || "", l.note || ""];
+      rows.push(row.map(csvEscape).join(","));
+    });
+  });
+  return rows.join("\r\n");
+}
+function parseCSV(text) {
+  var rows = [], row = [], field = "", inQuotes = false;
+  for (var i = 0; i < text.length; i++) {
+    var c = text[i];
+    if (inQuotes) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
+      else { field += c; }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\r") { /* skip */ }
+      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+      else { field += c; }
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(function (r) { return !(r.length === 1 && r[0] === ""); });
+}
+async function exportCSV() {
+  var csv = buildCSV();
+  if (!csv || csv.split("\r\n").length < 2) { flash("No logged data yet to export."); return; }
+  if (typeof window.claude === "object" && window.claude && typeof window.claude.use === "function") {
+    try {
+      var downloads = await window.claude.use("downloads");
+      if (downloads) {
+        try {
+          await downloads.save({ filename: "training-log-export.csv", data: csv });
+          return;
+        } catch (err) {
+          if (err && err.code === "declined") return;
+          // fall through to manual-copy fallback for any other error
+        }
+      }
+    } catch (e) { /* fall through */ }
+  }
+  state.exportFallback = csv;
+  render();
+}
+function dismissExportFallback() { state.exportFallback = null; render(); }
+function exportFallbackHTML(csv) {
+  return (
+    '<div class="form-box">' +
+      '<div class="field"><label>Downloads aren\u2019t available in this view \u2014 select all and copy the text below into a .csv file</label>' +
+      '<textarea readonly style="min-height:160px;font-family:ui-monospace,monospace;font-size:12px;" onclick="this.select()">' + esc(csv) + '</textarea></div>' +
+      '<div class="form-actions"><button class="btn btn-ghost disp" onclick="dismissExportFallback()">Close</button></div>' +
+    '</div>'
+  );
+}
+function triggerImport() {
+  var el = document.getElementById("import-file");
+  if (el) el.click();
+}
+function handleImportFile(event) {
+  var file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    try { importCSVText(e.target.result); }
+    catch (err) { flash("Couldn't read that file — expecting a CSV exported from this app."); }
+  };
+  reader.readAsText(file);
+}
+function importCSVText(text) {
+  var rows = parseCSV(text.trim());
+  if (!rows.length) { flash("That file had no rows to import."); return; }
+  var header = rows[0].map(function (h) { return h.trim().toLowerCase(); });
+  var idx = {};
+  header.forEach(function (h, i) { idx[h] = i; });
+
+  var exercises = getExercises();
+  var exMap = {}; exercises.forEach(function (e) { exMap[e.id] = e; });
+  var logsCache = {};
+  var added = 0, createdExercises = 0, exercisesChanged = false;
+
+  for (var r = 1; r < rows.length; r++) {
+    var cols = rows[r];
+    if (!cols || !cols.length) continue;
+    var get = function (name) { return idx[name] !== undefined ? (cols[idx[name]] || "").trim() : ""; };
+    var exId = get("exercise_id") || slugify(get("exercise_name") || "");
+    if (!exId) continue;
+    var dateRaw = get("date");
+    if (!dateRaw) continue;
+    var parsedDate = new Date(dateRaw);
+    var isoDate = isNaN(parsedDate.getTime()) ? dateRaw : parsedDate.toISOString();
+
+    if (!exMap[exId]) {
+      var unitRaw = get("unit");
+      var unit = (unitRaw === "reps" || unitRaw === "time" || unitRaw === "reps_weight") ? unitRaw : "reps_weight";
+      var newEx = {
+        id: exId,
+        name: get("exercise_name") || exId,
+        category: get("category") || "Imported",
+        unit: unit,
+        baseline: null, goal: null, progression: null, substitute: null,
+        sessionIds: []
+      };
+      exercises.push(newEx);
+      exMap[exId] = newEx;
+      createdExercises++;
+      exercisesChanged = true;
+    }
+
+    var entry = { date: isoDate };
+    var setsV = get("sets"); if (setsV) entry.sets = Number(setsV);
+    var repsV = get("reps"); if (repsV) entry.reps = Number(repsV);
+    var weightV = get("weight"); if (weightV) entry.weight = Number(weightV);
+    var timeV = get("time_seconds") || get("time"); if (timeV) entry.time = Number(timeV);
+    var noteV = get("note"); if (noteV) entry.note = noteV;
+
+    if (!logsCache[exId]) logsCache[exId] = getLogs(exId).slice();
+    var isDup = logsCache[exId].some(function (l) {
+      return l.date === entry.date && (l.sets || null) === (entry.sets || null) &&
+        (l.reps || null) === (entry.reps || null) && (l.weight || null) === (entry.weight || null) &&
+        (l.time || null) === (entry.time || null) && (l.note || "") === (entry.note || "");
+    });
+    if (!isDup) { logsCache[exId].push(entry); added++; }
+  }
+
+  if (exercisesChanged) saveExercises(exercises);
+  Object.keys(logsCache).forEach(function (exId) {
+    var arr = logsCache[exId];
+    arr.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    saveLogs(exId, arr);
+  });
+
+  var msg = "Imported " + added + " log " + (added === 1 ? "entry" : "entries");
+  if (createdExercises) msg += " and created " + createdExercises + " new exercise" + (createdExercises === 1 ? "" : "s");
+  msg += ".";
+  flash(msg);
+}
+
+// ---------------- icons ----------------
+var ICO_BACK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>';
+var ICO_PLUS = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+var ICO_TRASH = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>';
+var ICO_EDIT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+var ICO_DOWNLOAD = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';
+var ICO_UPLOAD = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>';
+
+// ---------------- render: card ----------------
+function exerciseCardHTML(ex) {
+  var logs = getLogs(ex.id);
+  var last = logs.length ? logs[logs.length - 1] : null;
+  var count = logs.length;
+  var sub = last ? "Last: " + esc(lastSessionLabel(ex, last)) : esc(ex.baseline || "Not logged yet");
+  var badge = count > 0 ? '<span class="pill pill-gold">' + count + ' logged</span>' : "";
+  return (
+    '<div class="card" onclick="openExercise(\'' + ex.id + '\')">' +
+      '<div class="card-top">' +
+        '<div><div class="disp card-name">' + esc(ex.name) + '</div><div class="card-sub">' + sub + '</div></div>' +
+        '<div style="flex-shrink:0;">' + badge + '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+// ---------------- render: home ----------------
+function homeHTML() {
+  var s = state;
+  var sessions = allSessions();
+  var tabsHTML = sessions.map(function (sess) {
+    var active = sess.id === s.sessionId ? " active" : "";
+    return '<button class="tab-btn disp' + active + '" onclick="selectSession(\'' + sess.id + '\')">' + esc(sess.label) + '</button>';
+  }).join("") + '<button class="tab-btn add-tab disp" onclick="toggleAddRoutine(true)">' + ICO_PLUS + ' Routine</button>';
+
+  var activeSession = sessions.filter(function (x) { return x.id === s.sessionId; })[0];
+  var blurbHTML = activeSession && activeSession.blurb ? '<p class="blurb">' + esc(activeSession.blurb) + '</p>' : "";
+
+  var routineActionsHTML = "";
+  if (s.sessionId !== "all") {
+    routineActionsHTML = '<div class="routine-actions">' +
+      '<button class="btn btn-primary btn-sm disp" onclick="openQuickLog(\'' + s.sessionId + '\')">' + ICO_PLUS + ' Log Workout</button>' +
+      '<button class="btn btn-danger-ghost btn-sm disp" onclick="deleteRoutine(\'' + s.sessionId + '\')">' + ICO_TRASH + ' Delete Routine</button>' +
+    '</div>';
+  }
+
+  var addRoutineForm = s.showAddRoutine ? addRoutineFormHTML() : "";
+
+  var listHTML;
+  if (s.sessionId === "all") {
+    var cats = categoriesInOrder();
+    var groups = cats.map(function (cat) {
+      return { cat: cat, items: getExercises().filter(function (e) { return e.category === cat; }) };
+    }).filter(function (g) { return g.items.length; });
+    listHTML = groups.length
+      ? groups.map(function (g) {
+          return '<div class="cat-group"><div class="disp cat-label">' + esc(g.cat) + '</div>' +
+            g.items.map(exerciseCardHTML).join("") + '</div>';
+        }).join("")
+      : '<div class="empty">No exercises yet — add your first one below.</div>';
+  } else {
+    var items = sessionExercises(s.sessionId);
+    listHTML = items.length
+      ? '<div class="cat-group">' + items.map(function (ex, i) {
+          return '<div class="row"><div class="step-badge disp">' + (i + 1) + '</div><div style="flex:1;">' + exerciseCardHTML(ex) + '</div></div>';
+        }).join("") + '</div>'
+      : '<div class="empty">Nothing in this routine yet. Add an exercise below and assign it here.</div>';
+  }
+
+  return (
+    '<div class="wrap">' +
+      '<div class="disp eyebrow">Training</div>' +
+      '<h1 class="disp title">Training Log</h1>' +
+      '<p class="subtitle">Add your own exercises and group them into routines.</p>' +
+      (s.flashMessage ? '<div class="flash-msg">' + esc(s.flashMessage) + '</div>' : "") +
+      (s.exportFallback ? exportFallbackHTML(s.exportFallback) : "") +
+      '<div class="data-actions">' +
+        '<button class="btn btn-ghost btn-sm disp" onclick="exportCSV()">' + ICO_DOWNLOAD + ' Export CSV</button>' +
+        '<button class="btn btn-ghost btn-sm disp" onclick="triggerImport()">' + ICO_UPLOAD + ' Import CSV</button>' +
+        '<input type="file" accept=".csv,text/csv" id="import-file" style="display:none" onchange="handleImportFile(event)" />' +
+      '</div>' +
+      '<div class="tabs">' + tabsHTML + '</div>' +
+      blurbHTML +
+      routineActionsHTML +
+      addRoutineForm +
+      '<div class="addbar"><button class="btn btn-ghost btn-sm disp" onclick="toggleAddForm(true)">' + ICO_PLUS + ' Add Exercise</button></div>' +
+      (s.showAddForm ? addExerciseFormHTML() : "") +
+      listHTML +
+    '</div>'
+  );
+}
+
+// ---------------- render: add routine form ----------------
+function addRoutineFormHTML(errorMsg) {
+  return (
+    '<div class="form-box">' +
+      '<div class="field"><label>Routine name *</label><input id="ar-name" type="text" placeholder="e.g. Session A" /></div>' +
+      (errorMsg ? '<div class="error-text">' + esc(errorMsg) + '</div>' : "") +
+      '<div class="field"><label>Description (optional)</label><textarea id="ar-blurb" placeholder="e.g. Compound-lean day, twice a week"></textarea></div>' +
+      '<div class="form-actions">' +
+        '<button class="btn btn-primary disp" onclick="submitAddRoutine()">Create Routine</button>' +
+        '<button class="btn btn-ghost disp" onclick="toggleAddRoutine(false)">Cancel</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+function toggleAddRoutine(open) { state.showAddRoutine = open; render(); }
+function submitAddRoutine() {
+  var name = (document.getElementById("ar-name").value || "").trim();
+  if (!name) {
+    render();
+    var box = document.querySelector(".form-box");
+    if (box) box.insertAdjacentHTML("afterbegin", '<div class="error-text" style="margin-top:0;">Give the routine a name first.</div>');
+    return;
+  }
+  var blurb = document.getElementById("ar-blurb").value.trim();
+  var routine = { id: uniqueSessionId(slugify(name)), label: name, blurb: blurb || null };
+  var routines = getRoutines();
+  routines.push(routine);
+  saveRoutines(routines);
+  state.showAddRoutine = false;
+  state.sessionId = routine.id;
+  render();
+}
+function deleteRoutine(id) {
+  var routines = getRoutines().filter(function (r) { return r.id !== id; });
+  saveRoutines(routines);
+  var exercises = getExercises().map(function (e) {
+    if (e.sessionIds && e.sessionIds.indexOf(id) !== -1) {
+      e.sessionIds = e.sessionIds.filter(function (sid) { return sid !== id; });
+    }
+    return e;
+  });
+  saveExercises(exercises);
+  state.sessionId = "all";
+  render();
+}
+
+// ---------------- render: add exercise form ----------------
+function addExerciseFormHTML(errorMsg) {
+  var datalist = '<datalist id="cat-list">' + CATEGORY_SUGGESTIONS.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>';
+  var routines = getRoutines();
+  var routineChecks = routines.length
+    ? '<div class="checks">' + routines.map(function (r) {
+        return '<label class="check-item"><input type="checkbox" id="ae-sess-' + r.id + '" /> ' + esc(r.label) + '</label>';
+      }).join("") + '</div>'
+    : '<div class="empty" style="padding:0;">No routines yet — create one from the tabs bar first if you want to assign this exercise to one.</div>';
+
+  return (
+    '<div class="form-box">' +
+      '<div class="field"><label>Exercise name *</label><input id="ae-name" type="text" placeholder="e.g. Face Pulls" /></div>' +
+      (errorMsg ? '<div class="error-text">' + esc(errorMsg) + '</div>' : "") +
+      '<div class="field"><label>Category</label><input id="ae-category" list="cat-list" type="text" placeholder="e.g. Pull" />' + datalist + '</div>' +
+      '<div class="field"><label>Tracking type</label>' +
+        '<select id="ae-unit">' +
+          '<option value="reps_weight">Reps + optional weight</option>' +
+          '<option value="reps">Reps only</option>' +
+          '<option value="time">Time (hold / hang)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="grid2">' +
+        '<div class="field"><label>Current baseline</label><input id="ae-baseline" type="text" placeholder="e.g. 3x10 bodyweight" /></div>' +
+        '<div class="field"><label>Goal</label><input id="ae-goal" type="text" placeholder="e.g. Add weight" /></div>' +
+      '</div>' +
+      '<div class="field"><label>Progression notes (optional)</label><textarea id="ae-progression" placeholder="How you plan to progress this"></textarea></div>' +
+      '<div class="field"><label>Substitution notes (optional)</label><textarea id="ae-substitute" placeholder="Anything it can or cannot replace"></textarea></div>' +
+      '<div class="field"><label>Add to routines</label>' + routineChecks + '</div>' +
+      '<div class="form-actions">' +
+        '<button class="btn btn-primary disp" onclick="submitAddExercise()">Add Exercise</button>' +
+        '<button class="btn btn-ghost disp" onclick="toggleAddForm(false)">Cancel</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+function toggleAddForm(open) { state.showAddForm = open; render(); }
+function submitAddExercise() {
+  var name = (document.getElementById("ae-name").value || "").trim();
+  if (!name) {
+    render();
+    var box = document.querySelector(".form-box");
+    if (box) box.insertAdjacentHTML("afterbegin", '<div class="error-text" style="margin-top:0;">Give it a name first.</div>');
+    return;
+  }
+  var category = (document.getElementById("ae-category").value || "").trim() || "Uncategorised";
+  var unit = document.getElementById("ae-unit").value;
+  var baseline = document.getElementById("ae-baseline").value.trim();
+  var goal = document.getElementById("ae-goal").value.trim();
+  var progression = document.getElementById("ae-progression").value.trim();
+  var substitute = document.getElementById("ae-substitute").value.trim();
+  var sessionIds = [];
+  getRoutines().forEach(function (r) {
+    var el = document.getElementById("ae-sess-" + r.id);
+    if (el && el.checked) sessionIds.push(r.id);
+  });
+
+  var ex = {
+    id: uniqueExerciseId(slugify(name)),
+    name: name, category: category, unit: unit,
+    baseline: baseline || null, goal: goal || null,
+    progression: progression || null, substitute: substitute || null,
+    sessionIds: sessionIds
+  };
+  var exercises = getExercises();
+  exercises.push(ex);
+  saveExercises(exercises);
+  state.showAddForm = false;
+  render();
+}
+function deleteExercise(id) {
+  var exercises = getExercises().filter(function (e) { return e.id !== id; });
+  saveExercises(exercises);
+  deleteLogsFor(id);
+  state.view = "home";
+  state.openId = null;
+  render();
+}
+
+// ---------------- render: edit exercise form ----------------
+function editExerciseFormHTML(ex) {
+  var datalist = '<datalist id="cat-list-edit">' + CATEGORY_SUGGESTIONS.map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>';
+  return (
+    '<div class="form-box">' +
+      '<div class="field"><label>Exercise name</label><input id="ee-name" type="text" value="' + esc(ex.name) + '" /></div>' +
+      '<div class="field"><label>Category</label><input id="ee-category" list="cat-list-edit" type="text" value="' + esc(ex.category) + '" />' + datalist + '</div>' +
+      '<div class="grid2">' +
+        '<div class="field"><label>Current baseline</label><input id="ee-baseline" type="text" value="' + esc(ex.baseline || "") + '" /></div>' +
+        '<div class="field"><label>Goal</label><input id="ee-goal" type="text" value="' + esc(ex.goal || "") + '" /></div>' +
+      '</div>' +
+      '<div class="field"><label>Progression notes</label><textarea id="ee-progression">' + esc(ex.progression || "") + '</textarea></div>' +
+      '<div class="field"><label>Substitution notes</label><textarea id="ee-substitute">' + esc(ex.substitute || "") + '</textarea></div>' +
+      '<div class="form-actions">' +
+        '<button class="btn btn-primary disp" onclick="submitEditExercise(\'' + ex.id + '\')">Save Changes</button>' +
+        '<button class="btn btn-ghost disp" onclick="toggleEditForm(false)">Cancel</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+function toggleEditForm(open) { state.showEditForm = open; render(); }
+function submitEditExercise(exId) {
+  var name = document.getElementById("ee-name").value.trim();
+  var category = document.getElementById("ee-category").value.trim() || "Uncategorised";
+  var baseline = document.getElementById("ee-baseline").value.trim();
+  var goal = document.getElementById("ee-goal").value.trim();
+  var progression = document.getElementById("ee-progression").value.trim();
+  var substitute = document.getElementById("ee-substitute").value.trim();
+  var exercises = getExercises();
+  for (var i = 0; i < exercises.length; i++) {
+    if (exercises[i].id === exId) {
+      if (name) exercises[i].name = name;
+      exercises[i].category = category;
+      exercises[i].baseline = baseline || null;
+      exercises[i].goal = goal || null;
+      exercises[i].progression = progression || null;
+      exercises[i].substitute = substitute || null;
+    }
+  }
+  saveExercises(exercises);
+  state.showEditForm = false;
+  render();
+}
+
+// ---------------- render: detail ----------------
+function chartSVG(ex, logs) {
+  if (logs.length < 2) return "";
+  var vals = logs.map(function (l) {
+    return ex.unit === "time" ? (l.time || 0) : ex.unit === "reps_weight" ? (l.weight || 0) : (l.reps || 0);
+  });
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  if (min === max) { min = min - 1; max = max + 1; }
+  var w = 300, h = 90, pad = 10;
+  var stepX = (w - pad * 2) / (vals.length - 1);
+  var pts = vals.map(function (v, i) {
+    var x = pad + i * stepX;
+    var y = pad + (1 - (v - min) / (max - min)) * (h - pad * 2);
+    return x.toFixed(1) + "," + y.toFixed(1);
+  });
+  var circles = vals.map(function (v, i) {
+    var parts = pts[i].split(",");
+    return '<circle cx="' + parts[0] + '" cy="' + parts[1] + '" r="3" fill="var(--hold)" />';
+  }).join("");
+  var label = ex.unit === "time" ? "Seconds held" : ex.unit === "reps_weight" ? "Added weight (kg)" : "Reps";
+  return (
+    '<div class="chart-box"><div class="chart-label">' + label + ' over time</div>' +
+    '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="110" preserveAspectRatio="xMidYMid meet">' +
+      '<polyline points="' + pts.join(" ") + '" fill="none" stroke="var(--hold)" stroke-width="2" />' +
+      circles +
+    '</svg></div>'
+  );
+}
+
+function logFormHTML(ex) {
+  var fields = UNIT_FIELDS[ex.unit];
+  var html = '<div class="form-box">' + '<div class="grid2">' +
+    '<div class="field"><label>Sets</label><input id="log-sets" inputmode="numeric" value="3" /></div>';
+  if (fields.indexOf("reps") !== -1) html += '<div class="field"><label>Reps</label><input id="log-reps" inputmode="numeric" placeholder="per set" /></div>';
+  if (fields.indexOf("weight") !== -1) html += '<div class="field"><label>Added weight (kg)</label><input id="log-weight" inputmode="decimal" placeholder="0" /></div>';
+  if (fields.indexOf("time") !== -1) {
+    html += '<div class="field"><label>Minutes</label><input id="log-min" inputmode="numeric" /></div>';
+    html += '<div class="field"><label>Seconds</label><input id="log-sec" inputmode="numeric" /></div>';
+  }
+  html += '</div>' +
+    '<div class="field"><label>Note (optional)</label><input id="log-note" placeholder="How did it feel?" /></div>' +
+    '<div class="form-actions">' +
+      '<button class="btn btn-primary disp" onclick="submitLogEntry(\'' + ex.id + '\')">Save Entry</button>' +
+      '<button class="btn btn-ghost disp" onclick="toggleLogForm(false)">Cancel</button>' +
+    '</div>' +
+  '</div>';
+  return html;
+}
+function toggleLogForm(open) { state.showLogForm = open; render(); }
+function submitLogEntry(exId) {
+  var ex = exerciseMap()[exId];
+  var fields = UNIT_FIELDS[ex.unit];
+  var entry = { date: new Date().toISOString() };
+  var sets = document.getElementById("log-sets").value;
+  if (sets) entry.sets = Number(sets);
+  if (fields.indexOf("reps") !== -1) {
+    var reps = document.getElementById("log-reps").value;
+    if (reps) entry.reps = Number(reps);
+  }
+  if (fields.indexOf("weight") !== -1) {
+    var weight = document.getElementById("log-weight").value;
+    if (weight) entry.weight = Number(weight);
+  }
+  if (fields.indexOf("time") !== -1) {
+    var min = Number(document.getElementById("log-min").value || 0);
+    var sec = Number(document.getElementById("log-sec").value || 0);
+    entry.time = min * 60 + sec;
+  }
+  var note = document.getElementById("log-note").value.trim();
+  if (note) entry.note = note;
+
+  var logs = getLogs(exId);
+  logs.push(entry);
+  logs.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+  saveLogs(exId, logs);
+  state.showLogForm = false;
+  render();
+}
+function deleteLogEntry(exId, idx) {
+  var logs = getLogs(exId);
+  logs.splice(idx, 1);
+  saveLogs(exId, logs);
+  render();
+}
+
+function toggleExerciseSession(exId, sessId, checked) {
+  var exercises = getExercises();
+  for (var i = 0; i < exercises.length; i++) {
+    if (exercises[i].id === exId) {
+      var ids = exercises[i].sessionIds || [];
+      if (checked && ids.indexOf(sessId) === -1) ids.push(sessId);
+      if (!checked) ids = ids.filter(function (sid) { return sid !== sessId; });
+      exercises[i].sessionIds = ids;
+    }
+  }
+  saveExercises(exercises);
+  render();
+}
+
+function routineMembershipHTML(ex) {
+  var routines = getRoutines();
+  if (!routines.length) return "";
+  var ids = ex.sessionIds || [];
+  var checks = routines.map(function (r) {
+    var checked = ids.indexOf(r.id) !== -1 ? " checked" : "";
+    return '<label class="check-item"><input type="checkbox"' + checked + ' onchange="toggleExerciseSession(\'' + ex.id + '\',\'' + r.id + '\',this.checked)" /> ' + esc(r.label) + '</label>';
+  }).join("");
+  return (
+    '<div class="info-box"><div class="disp info-head" style="color:var(--gold);margin-bottom:8px;font-size:10px;">Routines</div>' +
+    '<div class="checks">' + checks + '</div></div>'
+  );
+}
+
+function detailHTML(ex) {
+  var logs = getLogs(ex.id);
+  var s = state;
+  var infoRows = "";
+  if (ex.progression) {
+    infoRows += '<details class="note-details"><summary class="disp note-summary" style="color:var(--gold);">Progression</summary><div class="info-body">' + esc(ex.progression) + '</div></details>';
+  }
+  if (ex.substitute) {
+    infoRows += '<details class="note-details"><summary class="disp note-summary" style="color:var(--hold);">Substitution note</summary><div class="info-body">' + esc(ex.substitute) + '</div></details>';
+  }
+  var infoBox = infoRows ? '<div class="info-box">' + infoRows + '</div>' : "";
+
+  var historyHTML = logs.length === 0
+    ? '<div class="empty">No sessions logged yet.</div>'
+    : logs.slice().reverse().map(function (l, i) {
+        var realIdx = logs.length - 1 - i;
+        var dateStr = new Date(l.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+        return (
+          '<div class="hist-item">' +
+            '<div><div class="hist-main">' + esc(lastSessionLabel(ex, l)) + '</div>' +
+            '<div class="hist-meta">' + dateStr + (l.note ? " · " + esc(l.note) : "") + '</div></div>' +
+            '<button class="icon-btn" onclick="deleteLogEntry(\'' + ex.id + '\',' + realIdx + ')">' + ICO_TRASH + '</button>' +
+          '</div>'
+        );
+      }).join("");
+
+  return (
+    '<div class="wrap">' +
+      '<button class="back-btn disp" onclick="goHome()">' + ICO_BACK + ' Back</button>' +
+      '<div class="detail-head">' +
+        '<span class="pill pill-muted">' + esc(ex.category) + '</span>' +
+        '<div style="margin-left:auto;display:flex;gap:4px;">' +
+          (s.showEditForm ? "" : '<button class="icon-btn" onclick="toggleEditForm(true)">' + ICO_EDIT + '</button>') +
+          '<button class="icon-btn" onclick="deleteExercise(\'' + ex.id + '\')">' + ICO_TRASH + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<h1 class="disp title" style="font-size:26px;margin-top:10px;">' + esc(ex.name) + '</h1>' +
+      (ex.baseline ? '<p class="baseline">' + esc(ex.baseline) + '</p>' : '<p class="baseline"></p>') +
+      (s.showEditForm ? editExerciseFormHTML(ex) : "") +
+      infoBox +
+      routineMembershipHTML(ex) +
+      chartSVG(ex, logs) +
+      (!s.showLogForm
+        ? '<button class="btn btn-primary btn-block disp" style="display:flex;align-items:center;justify-content:center;gap:6px;" onclick="toggleLogForm(true)">' + ICO_PLUS + ' Log Session</button>'
+        : logFormHTML(ex)) +
+      '<div class="section-title"><div class="disp hist-title">History</div>' + historyHTML + '</div>' +
+    '</div>'
+  );
+}
+
+// ---------------- render: quick log ----------------
+function quickLogHTML(sessionId) {
+  var session = allSessions().filter(function (x) { return x.id === sessionId; })[0];
+  var items = sessionExercises(sessionId);
+  var rows = items.map(function (ex) {
+    var fields = UNIT_FIELDS[ex.unit];
+    var logs = getLogs(ex.id);
+    var last = logs.length ? logs[logs.length - 1] : null;
+    var setsVal = last && last.sets ? last.sets : 3;
+    var html = '<div class="ql-card"><div class="disp ql-name">' + esc(ex.name) + '</div><div class="grid2 ql-fields">';
+    html += '<div class="field"><label>Sets</label><input id="ql-sets-' + ex.id + '" inputmode="numeric" value="' + setsVal + '" /></div>';
+    if (fields.indexOf("reps") !== -1) html += '<div class="field"><label>Reps</label><input id="ql-reps-' + ex.id + '" inputmode="numeric" placeholder="' + (last && last.reps ? last.reps : "per set") + '" /></div>';
+    if (fields.indexOf("weight") !== -1) html += '<div class="field"><label>Weight (kg)</label><input id="ql-weight-' + ex.id + '" inputmode="decimal" placeholder="' + (last && last.weight ? last.weight : "0") + '" /></div>';
+    if (fields.indexOf("time") !== -1) {
+      html += '<div class="field"><label>Min</label><input id="ql-min-' + ex.id + '" inputmode="numeric" placeholder="' + (last && last.time ? Math.floor(last.time / 60) : "0") + '" /></div>';
+      html += '<div class="field"><label>Sec</label><input id="ql-sec-' + ex.id + '" inputmode="numeric" placeholder="' + (last && last.time ? last.time % 60 : "0") + '" /></div>';
+    }
+    html += "</div></div>";
+    return html;
+  }).join("");
+
+  return (
+    '<div class="wrap">' +
+      '<button class="back-btn disp" onclick="cancelQuickLog(\'' + sessionId + '\')">' + ICO_BACK + ' Back</button>' +
+      '<div class="disp eyebrow">Log Workout</div>' +
+      '<h1 class="disp title" style="font-size:24px;">' + esc(session ? session.label : "") + '</h1>' +
+      '<p class="subtitle">Fill in what you did — leave an exercise blank to skip it.</p>' +
+      (items.length ? rows : '<div class="empty">No exercises in this routine yet.</div>') +
+      (items.length ? '<button class="btn btn-primary btn-block disp" onclick="submitQuickLog(\'' + sessionId + '\')">Save Workout</button>' : "") +
+    '</div>'
+  );
+}
+function openQuickLog(sessionId) { state.view = "quicklog"; state.quickSessionId = sessionId; render(); }
+function cancelQuickLog(sessionId) { state.view = "home"; state.sessionId = sessionId; render(); }
+function submitQuickLog(sessionId) {
+  var items = sessionExercises(sessionId);
+  items.forEach(function (ex) {
+    var fields = UNIT_FIELDS[ex.unit];
+    var entry = { date: new Date().toISOString() };
+    var hasAny = false;
+    var setsEl = document.getElementById("ql-sets-" + ex.id);
+    var sets = setsEl ? setsEl.value : "";
+    if (sets) entry.sets = Number(sets);
+    if (fields.indexOf("reps") !== -1) {
+      var r = document.getElementById("ql-reps-" + ex.id).value;
+      if (r) { entry.reps = Number(r); hasAny = true; }
+    }
+    if (fields.indexOf("weight") !== -1) {
+      var w = document.getElementById("ql-weight-" + ex.id).value;
+      if (w) { entry.weight = Number(w); hasAny = true; }
+    }
+    if (fields.indexOf("time") !== -1) {
+      var m = Number(document.getElementById("ql-min-" + ex.id).value || 0);
+      var sec = Number(document.getElementById("ql-sec-" + ex.id).value || 0);
+      if (m || sec) { entry.time = m * 60 + sec; hasAny = true; }
+    }
+    if (hasAny) {
+      var logs = getLogs(ex.id);
+      logs.push(entry);
+      logs.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+      saveLogs(ex.id, logs);
+    }
+  });
+  state.view = "home";
+  state.sessionId = sessionId;
+  render();
+}
+
+// ---------------- navigation ----------------
+function openExercise(id) { state.view = "detail"; state.openId = id; state.showLogForm = false; state.showEditForm = false; render(); }
+function goHome() { state.view = "home"; state.openId = null; render(); }
+function selectSession(id) { state.sessionId = id; state.showAddRoutine = false; render(); }
+
+// ---------------- render root ----------------
+function render() {
+  var app = document.getElementById("app");
+  if (state.view === "detail" && state.openId) {
+    var ex = exerciseMap()[state.openId];
+    if (ex) { app.innerHTML = detailHTML(ex); return; }
+    state.view = "home";
+  }
+  if (state.view === "quicklog" && state.quickSessionId) {
+    app.innerHTML = quickLogHTML(state.quickSessionId);
+    return;
+  }
+  app.innerHTML = homeHTML();
+}
+
+render();
+</script>
+</body>
+</html>
